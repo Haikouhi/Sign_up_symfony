@@ -23,10 +23,9 @@ $routes->post('vehicules/save',  'VehiculesController@save');
 $routes->get('/login', 'UsersController@login');
 $routes->post('/login', 'UsersController@login');
 
-$routes->post('/logout', 'UsersController@logout');
+$routes->get('/logout', 'UsersController@logout');
 
-$routes->get('signup', 'UsersController@signup');
-$routes->post('signup', 'UsersController@signup');
-
+$routes->get('/signup', 'UsersController@signup');
+$routes->post('/signup', 'UsersController@signup');
 
 $routes->run();

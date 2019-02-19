@@ -1,20 +1,35 @@
 <?php
 
 class User extends Db {
+
     protected $id;
     protected $pseudo;
     protected $email;
+    protected $password;
     protected $created_at;
 
-    public function __contruct($pseudo, $email, $id = null) {
-        
+    const TABLE_NAME = "user";
+
+    public function __construct(string $pseudo, string $email, string $password, $id = null) {
+        $this->setPseudo($pseudo);
+        $this->setEmail($email);
+
+        // On ne passe par setPassword, qui hashe le mdp, que si on n'a pas d'ID (si on a un nouveau user)
+
+        if ($id !== null) {
+            $this->password = $password;
+        }
+        else {
+            $this->setPassword($password);
+        }
+
+        $this->setId($id);
     }
-    
 
     /**
      * Get the value of id
      */ 
-    public function getId()
+    public function id()
     {
         return $this->id;
     }
@@ -34,7 +49,7 @@ class User extends Db {
     /**
      * Get the value of pseudo
      */ 
-    public function getPseudo()
+    public function pseudo()
     {
         return $this->pseudo;
     }
@@ -54,7 +69,7 @@ class User extends Db {
     /**
      * Get the value of email
      */ 
-    public function getEmail()
+    public function email()
     {
         return $this->email;
     }
@@ -66,6 +81,8 @@ class User extends Db {
      */ 
     public function setEmail($email)
     {
+
+        /** TODO: validation de l'e-mail */
         $this->email = $email;
 
         return $this;
@@ -74,7 +91,7 @@ class User extends Db {
     /**
      * Get the value of created_at
      */ 
-    public function getCreated_at()
+    public function createdAt()
     {
         return $this->created_at;
     }
@@ -84,10 +101,91 @@ class User extends Db {
      *
      * @return  self
      */ 
-    public function setCreated_at($created_at)
+    public function setCreatedAt($created_at)
     {
         $this->created_at = $created_at;
 
         return $this;
+    }
+
+    /**
+     * Get the value of password
+     */ 
+    public function password()
+    {
+        return $this->password;
+    }
+
+    /**
+     * Set the value of password
+     *
+     * @return  self
+     */ 
+    public function setPassword($password)
+    {
+        // TODO: FACULTATIF : valider le mot de passe
+        // (pas trop court, avec des chars speciaux, maj + min ...)
+
+        // on n'enregistre pas $password dans $this->password directement !
+        // Il faut hasher le mot de passe en utilisant la fonction password_hash()
+
+
+        $this->password = password_hash($password, PASSWORD_DEFAULT);
+
+        return $this;
+    }
+
+    public function save()
+    {
+        $data = [
+            'email' => $this->email(),
+            'pseudo' => $this->pseudo(),
+            'password_hash' => $this->password(),
+        ];
+
+        $this->setId(Db::dbCreate(self::TABLE_NAME, $data));
+
+        return $this;
+    }
+
+    public static function findByEmail(string $email)
+    {
+        $data = Db::dbFind(self::TABLE_NAME, [
+            ['email', '=', $email]
+        ]);
+
+        if (count($data) > 0) $data = $data[0];
+        else return; // throw new Exception('Le user n\'existe pas.');
+
+
+        $user = new User(
+            $data['pseudo'],
+            $data['email'],
+            $data['password_hash'],
+            intval($data['id'])
+        );
+
+        return $user;
+    }
+
+    public static function findByCredentials(string $email, string $password)
+    {
+        $data = Db::dbFind(self::TABLE_NAME, [
+            ['email', '=', $email],
+            ['email', '=', password_verify($password, PASSWORD_DEFAULT)]
+        ]);
+
+        if (count($data) > 0) $data = $data[0];
+        else return; // throw new Exception('Le user n\'existe pas.');
+
+
+        $user = new User(
+            $data['pseudo'],
+            $data['email'],
+            $data['password_hash'],
+            intval($data['id'])
+        );
+
+        return $user;
     }
 }
